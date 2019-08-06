@@ -1,0 +1,272 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://scaffold.bombbomb.io/scaffold-update.json",
+    "title": "Scaffold Update",
+    "description": "Describes a set of steps to update scaffold",
+    "type": "object",
+    "required": [
+        "jobId",
+        "githubOrganization",
+        "gitEnvironments",
+        "operations"
+    ],
+    "properties": {
+        "jobId": {
+            "description": "unique identifier of job, expect guid",
+            "type": "string"
+        },
+        "githubOrganization": {
+            "description": "Github environment",
+            "default": "bombbomb",
+            "type": "string"
+        },
+        "gitEnvironments": {
+            "description": "An array of github environments like repo/branch",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "operations": {
+            "description": "An array of operations to perform on the repos",
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "oneOf": [
+                    { "$ref": "#/definitions/findAndReplaceOperation" },
+                    { "$ref": "#/definitions/findOperation" },
+                    { "$ref": "#/definitions/findFilesOperation" },
+                    { "$ref": "#/definitions/addFileOperation" },
+                    { "$ref": "#/definitions/deleteFilesOperation" }
+                ]
+            }
+        }
+    },
+    "definitions": {
+        "reportAction": {
+            "properties": {
+                "message": {
+                    "description": "the message to display for a given action",
+                    "type": "string"
+                },
+                "severity": {
+                    "description": "the severity of the message",
+                    "type": "string",
+                    "enum": [
+                        "ERROR",
+                        "INFO"
+                    ]
+                }
+            },
+            "required": [
+                "message",
+                "severity"
+            ]
+        },
+        "conditions": {
+            "description": "condition to do something",
+            "type": "object",
+            "required": [
+                "operator",
+                "conditions"
+            ],
+            "properties": {
+                "operator": {
+                    "description": "boolean operator",
+                    "type": "string",
+                    "enum": ["AND", "OR"]
+                },
+                "conditions": {
+                    "description": "boolean conditions",
+                    "type": "array",
+                    "items": {
+                        "oneOf": [
+                            { "$ref": "#/definitions/conditions" },
+                            {
+                                "type": "object",
+                                "allOf": [
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "inverse": {
+                                                "description": "true if success should be false",
+                                                "type": "boolean",
+                                                "default": false
+                                            }
+                                        },
+                                        "required": ["inverse"]
+                                    },
+                                    {
+                                        "oneOf": [
+                                            { "$ref": "#/definitions/findOperation" },
+                                            { "$ref": "#/definitions/findFilesOperation" }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        "operationBase": {
+            "properties": {
+                "successReportAction": {
+                    "$ref": "#/definitions/reportAction"
+                },
+                "failureReportAction": {
+                    "$ref": "#/definitions/reportAction"
+                },
+                "type": {
+                    "description": "type of operation",
+                    "type": "string",
+                    "enum": [
+                        "FIND_AND_REPLACE_IN_FILES",
+                        "FIND_IN_FILES",
+                        "FIND_FILES",
+                        "ADD_FILE",
+                        "DELETE_FILES"
+                    ]
+                },
+                "conditions": {
+                    "$ref": "#/definitions/conditions"
+                }
+            },
+            "required": [
+                "successReportAction",
+                "failureReportAction",
+                "type"
+            ]
+        },
+        "findAndReplaceOperation": {
+            "description": "operation type which finds and replaces text in files matching pattern",
+            "allOf": [
+                { "$ref": "#/definitions/operationBase" },
+                {
+                    "type": "object",
+                    "description": "find and replace operation properties",
+                    "properties": {
+                        "findInFiles": {
+                            "description": "file patterns to search",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "minItems": 1
+                        },
+                        "findText": {
+                            "description": "text to find, can include newline characters",
+                            "type": "string"
+                        },
+                        "replaceText": {
+                            "description": "text to replace with, can include newline characters",
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "findInFiles",
+                        "findText",
+                        "replaceText"
+                    ]
+                }
+            ]
+        },
+        "findOperation": {
+            "description": "operation type which finds text in files matching pattern",
+            "allOf": [
+                { "$ref": "#/definitions/operationBase" },
+                {
+                    "type": "object",
+                    "description": "find operation properties",
+                    "properties": {
+                        "findInFiles": {
+                            "description": "file patterns to search",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "minItems": 1
+                        },
+                        "findText": {
+                            "description": "text to find, can include newline characters",
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "findInFiles",
+                        "findText"
+                    ]
+                }
+            ]
+        },
+        "findFilesOperation": {
+            "description": "operation type which finds a file(s) matching pattern",
+            "allOf": [
+                { "$ref": "#/definitions/operationBase" },
+                {
+                    "type": "object",
+                    "description": "find operation properties",
+                    "properties": {
+                        "filePatterns": {
+                            "description": "file patterns to search",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "minItems": 1
+                        }
+                    },
+                    "required": [
+                        "filePatterns"
+                    ]
+                }
+            ]
+        },
+        "addFileOperation": {
+            "description": "operation type which adds a file",
+            "allOf": [
+                { "$ref": "#/definitions/operationBase" },
+                {
+                    "type": "object",
+                    "description": "adds a file",
+                    "properties": {
+                        "fileName": {
+                            "description": "file to add, including path",
+                            "type": "string"
+                        },
+                        "fileContents": {
+                            "description": "what goes in the file",
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "fileName",
+                        "fileContents"
+                    ]
+                }
+            ]
+        },
+        "deleteFilesOperation": {
+            "description": "operation type which deletes a file",
+            "allOf": [
+                { "$ref": "#/definitions/operationBase" },
+                {
+                    "type": "object",
+                    "description": "deletes a file",
+                    "properties": {
+                        "fileNames": {
+                            "description": "files to delete, including path",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "required": [
+                        "fileNames"
+                    ]
+                }
+            ]
+        }
+    }
+}
