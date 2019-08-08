@@ -27,6 +27,14 @@
                 "type": "string"
             }
         },
+        "commitMessage": {
+            "description": "message to put in git commit",
+            "type": "string"
+        },
+        "pullRequestName": {
+            "description": "pull request title",
+            "type": "string"
+        },
         "operations": {
             "description": "An array of operations to perform on the repos",
             "type": "array",
@@ -63,12 +71,13 @@
                 "severity"
             ]
         },
-        "conditions": {
+        "condition": {
             "description": "condition to do something",
             "type": "object",
             "required": [
                 "operator",
-                "conditions"
+                "conditions",
+                "inverse"
             ],
             "properties": {
                 "operator": {
@@ -76,12 +85,17 @@
                     "type": "string",
                     "enum": ["AND", "OR"]
                 },
+                "inverse": {
+                    "description": "whether this condition should be the inverse",
+                    "type": "boolean",
+                    "default": false
+                },
                 "conditions": {
                     "description": "boolean conditions",
                     "type": "array",
                     "items": {
                         "oneOf": [
-                            { "$ref": "#/definitions/conditions" },
+                            { "$ref": "#/definitions/condition" },
                             {
                                 "type": "object",
                                 "allOf": [
@@ -129,7 +143,7 @@
                     ]
                 },
                 "conditions": {
-                    "$ref": "#/definitions/conditions"
+                    "$ref": "#/definitions/condition"
                 }
             },
             "required": [
