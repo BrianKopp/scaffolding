@@ -4,6 +4,7 @@ import subprocess
 from git import Repo
 import os
 from scaffold.conditions import evaluate_condition
+from scaffold.structured_log import StructuredMessage as m
 import scaffold.operations as scops
 
 
